@@ -4,7 +4,7 @@
 // CommandLine Description
 //	Randombms.exe <filename> <arr> [player]
 //		<filename>:	(Requied)BMS filename(full path).
-//		<arr>:		(Option)Designate random arrangement. In order from left.
+//		<arr>:		(Requied)Designate random arrangement. In order from left.
 //					Please characters that you enter partitions with a slash(/).
 //					(exsample: 1/2/3/4/5/6/7, 7/6/5/4/3/2/1, etc.)
 //					You can use special word: "mirror", "random", and "cui".
@@ -111,18 +111,12 @@ int CheckCommand(const char* Cmd)
 // Main
 int main(int CmdSize, const char* CmdStr[])
 {
-	Playmode Mode = Key7;	// Playmode(Single, Double, ...)
+	Playmode Mode = Key7;	// Playmode(Key7, key14, ...)
 	const char* FileName;	// FileName(Full path)
 	const char* ArrayBase;	// RandomBase(1/5/2/3/4/6/7, etc.)
 	char* Player = NULL;	// BMS file player
 	char ArrInput[256];		// RandomArr.Input
 	char OutName[256];		// Output FileName(Full path)
-	// -----------------------------
-	// test
-	//CmdStr[1]="C:/Users/Akira/Documents/Visual Studio 2012/Projects/RandomBMS/Debug/base.bms";
-	//CmdStr[2]="random";
-	//CmdStr[3]="E:/LR2beta3/LR2_HD.exe";
-	//CmdSize = 4;
 	// -----------------------------
 	// base output
 	printf("-----------------------------\n");
