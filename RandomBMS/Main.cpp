@@ -4,7 +4,7 @@
 // CommandLine Description
 //	Randombms.exe <filename> <arr> [player]
 //		<filename>:	(Requied)BMS filename(full path).
-//		<arr>:		(Requied)Designate random arrangement. In order from left.
+//		<arr>:		(Option)Designate random arrangement. In order from left.
 //					Please characters that you enter partitions with a slash(/).
 //					(exsample: 1/2/3/4/5/6/7, 7/6/5/4/3/2/1, etc.)
 //					You can use special word: "mirror", "random", and "cui".
@@ -58,7 +58,7 @@ bool GenRandArray(char* Output, int BufSize, int ModeNum)
 int* TransArray(const char* Output, int ModeNum)
 {
 	// return array(generated)
-	int* NumArray = new int[ModeNum-1];
+	int* NumArray = new int[ModeNum];
 	// Flag
 	int UnusedNum = pow(2.0f, ModeNum) - 1;
 	// tmp
@@ -112,11 +112,11 @@ int CheckCommand(const char* Cmd)
 int main(int CmdSize, const char* CmdStr[])
 {
 	Playmode Mode = Key7;	// Playmode(Key7, key14, ...)
-	const char* FileName;	// FileName(Full path)
 	const char* ArrayBase;	// RandomBase(1/5/2/3/4/6/7, etc.)
-	char* Player = NULL;	// BMS file player
+	char FileName[256];		// FileName(Full path)
 	char ArrInput[256];		// RandomArr.Input
 	char OutName[256];		// Output FileName(Full path)
+	char Player[256];		// BMS file player
 	// -----------------------------
 	// base output
 	printf("-----------------------------\n");
@@ -125,28 +125,28 @@ int main(int CmdSize, const char* CmdStr[])
 	// rand reset
 	srand((unsigned)time(NULL));
 	// Filename Check
-	if(CmdSize <= 2){
+	if(CmdSize <= 1){
 		// empty
-		printf("Error:: Please input bms filepath and random arrangement.\n");
+		printf("Error:: Please input bms file path.\n");
 		printf("For command line, please refer to the \"Readme.txt\".\n");
 		system("pause");
 		return -1;
 	}
 	// Copy Filename
-	FileName = CmdStr[1];
+	sprintf_s(FileName, sizeof(FileName), CmdStr[1]);
 	// Arr Check
-	if(!strcmp(CmdStr[2], "cui")){
+	if(CmdSize <= 2 || !strcmp(CmdStr[2], "cui")){
 		// input on cui
 		printf("-Designate Random Arrangement(In order from left).\n");
 		printf(" (exsample: 1/2/3/4/5/6/7, 7/6/5/4/3/2/1, etc...)\n :: ");
 		fgets(ArrInput, sizeof(ArrInput), stdin);
-		ArrayBase = ArrInput;
+		CmdStr[2] = ArrInput;
 	}
-	else if(!strcmp(CmdStr[2], "mirror")){
+	if(strstr(CmdStr[2], "mirror")){
 		// mirror
 		ArrayBase = "7/6/5/4/3/2/1";
 	}
-	else if(!strcmp(CmdStr[2], "random")){
+	else if(strstr(CmdStr[2], "random")){
 		// generate random array
 		GenRandArray(ArrInput, sizeof(ArrInput), Mode);
 		ArrayBase = ArrInput;
@@ -156,7 +156,7 @@ int main(int CmdSize, const char* CmdStr[])
 		ArrayBase = CmdStr[2];
 	}
 	// Check Player
-	Player = (CmdSize>=4 ? CmdStr[3] : "");
+	strcpy_s(Player, sizeof(Player), (CmdSize>=4 ? CmdStr[3] : ""));
 	// -----------------------------
 	// Transrate Array
 	int* Array = TransArray(ArrayBase, Mode);
@@ -170,15 +170,22 @@ int main(int CmdSize, const char* CmdStr[])
 	// -----------------------------
 	// Base File Open
 	FILE *fpb, *fpo;
-	fopen_s(&fpb, FileName, "r");
-	// Output File Open
-	char* dst;
-	strcpy_s(OutName, sizeof(OutName), FileName);
-	char* UnExtName = strtok_s(OutName, ".", &dst);
-	for(int i = 0; i < Mode; i++){
-		sprintf_s(UnExtName, sizeof(OutName), "%s%X", UnExtName, Array[i]);
+	errno_t Err;
+	if(Err = fopen_s(&fpb, FileName, "r")){
+		strerror_s(ArrInput, sizeof(ArrInput), Err);
+		printf("Error: %s\n", ArrInput);
+		system("pause");
+		return -1;
 	}
-	sprintf_s(OutName, sizeof(OutName), "%s.bms", UnExtName);
+	// Output File Open
+	char *dst, cpy[256];
+	strcpy_s(cpy, sizeof(cpy), FileName);
+	char* UnExtName = strtok_s(cpy, ".", &dst);
+	strcpy_s(OutName, sizeof(OutName), UnExtName);
+	for(int i = 0; i < Mode; i++){
+		sprintf_s(OutName, sizeof(OutName), "%s%X", OutName, Array[i]);
+	}
+	sprintf_s(OutName, sizeof(OutName), "%s.bms", OutName);
 	fopen_s(&fpo, OutName, "w");
 	// File Read and Write
 	while(feof(fpb) == 0){
@@ -231,7 +238,7 @@ int main(int CmdSize, const char* CmdStr[])
 	fclose(fpo);
 	// -----------------------------
 	// Played
-	if(Player != NULL){
+	if(Player != NULL && strcmp(Player, "") != 0){
 		// Play
 		char Launch[512];
 		sprintf_s(Launch, sizeof(Launch), "%s \"%s\"", Player, OutName);
